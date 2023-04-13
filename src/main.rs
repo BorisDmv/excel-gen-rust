@@ -1,76 +1,81 @@
-use printpdf::*;
-use std::fs::File;
-use std::io::BufWriter;
-extern crate timer;
-extern crate chrono;
-use std::sync::mpsc::channel;
 #[macro_use]
 extern crate simple_excel_writer as excel;
 use excel::*;
-
+use mysql::{self, OptsBuilder};
+use mysql::prelude::{Queryable, FromRow};
+use dotenv::dotenv;
+use std::env;
 
 
 fn main() {
 
-    let timer = timer::Timer::new();
-    let (tx, rx) = channel();
-    timer.schedule_with_delay(chrono::Duration::seconds(3), move || {
-        tx.send(()).unwrap();
-    });
+    dotenv().ok();
 
     create_excel();
 
-
-    rx.recv().unwrap();
-    let elapsed = timer.elapsed();
-    println!("This code has been executed in {} seconds", elapsed.as_secs());
 }
 
 fn create_excel() {
+
+
     let mut wb = Workbook::create("tmp/b.xlsx");
-    //let mut sheet = wb.create_sheet("SheetName");
 
-    // set column width
-    // sheet.add_column(Column { width: 30.0 });
-    // sheet.add_column(Column { width: 30.0 });
-    // sheet.add_column(Column { width: 80.0 });
-    // sheet.add_column(Column { width: 60.0 });
+    let mut sheet = wb.create_sheet("Sheet");
 
-    // wb.write_sheet(&mut sheet, |sheet_writer| {
-    //     let sw = sheet_writer;
-    //     sw.append_row(row!["Name", "Title","Success","XML Remark"])?;
+    sheet.add_column(Column { width: 20.0 });
+    sheet.add_column(Column { width: 20.0 });
 
-    //     sw.append_row(row!["Amy", "wtf", true,"<xml><tag>\"Hello\" & 'World'</tag></xml>"])?;
-    //     sw.append_row(row!["Tony", blank!(2), "retired"])
-    // }).expect("write excel error!");
-
-    let mut sheet = wb.create_sheet("Sheet2");
     wb.write_sheet(&mut sheet, |sheet_writer| {
 
         let sw = sheet_writer;
 
-        for i in 1..600 {
-            sw.append_row(row!["Name", "Title","Success","Remark"])?;
+        // for i in 1..600 {
+        //     sw.append_row(row!["Name", "Title","Success","Remark"])?;
+        // }
+
+        // let server = env::var("SERVER").unwrap();
+        // let database = env::var("DATABASE").unwrap();
+        // let username = env::var("USERNAME").unwrap();
+        // let password = env::var("PASSWORD").unwrap();
+        // let port = env::var("PORT").unwrap().parse::<u16>().unwrap();
+
+        // Define connection parameters
+        let server = "localhost";
+        let database = "test-db";
+        let username = "root";
+        let password = "";
+        let port = 3306; // 3306 otherwise 3307 for ssh tunnel
+
+        // Build options for the database connection
+        let opts = OptsBuilder::new()
+            .ip_or_hostname(Some(server))
+            .db_name(Some(database))
+            .user(Some(username))
+            .pass(Some(password))
+            .tcp_port(port)
+            .ssl_opts(None);
+
+        // Connect to the database
+        let pool = mysql::Pool::new(mysql::Opts::from(opts)).unwrap();
+        let mut conn = pool.get_conn().unwrap();
+
+        // let result: Vec<(String, String, String, String, String)> = conn
+        //     .query("SELECT id, client, quarter, year, wages FROM taxable_wages")
+        //     .unwrap();
+
+        let result: Vec<(String, String)> = conn
+            .query("SELECT id, name FROM users")
+            .unwrap();
+
+        for dbRow in result {
+            sw.append_row(row![dbRow.0, dbRow.1])?;
+            //println!("{:?}", row.1);
         }
+
             //sw.append_row(row!["Name", "Title","Success","Remark"])?;
-            sw.append_row(row!["Amy", "Manager", true])
-        
+            sw.append_row(row!["END", "LINE", true])
+
     }).expect("write excel error!");
 
     wb.close().expect("close excel error!");
-}
-
-fn create_pdf(){
-        let (doc, page1, layer1) = PdfDocument::new("PDF_Document_title", Mm(1280.0), Mm(720.0), "Layer 1");
-        let current_layer = doc.get_page(page1).get_layer(layer1);
-
-
-        let text = "Lorem ipsum";
-        let font = doc.add_external_font(File::open("assets/fonts/RobotoMedium.ttf").unwrap()).unwrap();
-
-        current_layer.use_text(text, 48.0, Mm(200.0), Mm(200.0), &font);
-
-
-        // Save the PDF document to a file
-        doc.save(&mut BufWriter::new(File::create("test_working.pdf").unwrap())).unwrap();
 }

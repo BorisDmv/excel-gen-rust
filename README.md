@@ -4,8 +4,8 @@
 Install rust from *rustup.rs* and you will have 
 
 * **rustc** the rust compiler.
-* rustup manages our Rust version.
-* cargo is our main tool used during development.
+* **rustup** manages our Rust version.
+* **cargo** is our main tool used during development.
 
 ###
 
