@@ -9,13 +9,16 @@ use std::time::Instant;
 
 fn main() {
 
-    let start_time = Instant::now();
+    let start = Instant::now();
     println!("Generating started...");
 
     create_excel();
 
-    let elapsed_time = start_time.elapsed();
-    println!("Elapsed time: {:.2?}", elapsed_time.as_secs_f64());
+    let elapsed = start.elapsed();
+    let elapsed_ms = elapsed.as_millis();
+    let elapsed_s = elapsed.as_secs();
+
+    println!("Elapsed time: {} ms ({:.2} s)", elapsed_ms, elapsed_s as f64);
 
     // wait for user input before closing console
     let mut input = String::new();
@@ -59,7 +62,7 @@ fn create_excel() {
             .unwrap();
 
         for db_row in result {
-            match sw.append_row(row![db_row.0, db_row.1, db_row.2, db_row.3, db_row.4]) {
+            match sw.append_row(row![db_row.0, db_row.1]) {
                 Ok(_) => (),
                 Err(e) => return Err(*Box::new(e)),
             }
