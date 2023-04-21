@@ -30,8 +30,14 @@ If needed to update your dependencies to the latest versions.
 cargo update
 ```
 
-To run the script
+To run the script in debug mode
 
 ```
 cargo run
+```
+
+To build the script in release mode
+
+```
+cargo build --release
 ```
