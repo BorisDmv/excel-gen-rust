@@ -32,7 +32,7 @@ fn create_excel() {
 
     wb.write_sheet(&mut sheet, |sheet_writer| {
 
-    let sw = sheet_writer;
+        let sw = sheet_writer;
 
         // Define connection parameters
         let server = "localhost";
@@ -59,11 +59,13 @@ fn create_excel() {
             .unwrap();
 
         for db_row in result {
-            sw.append_row(row![db_row.0, db_row.1, db_row.2, db_row.3, db_row.4])?;
+            match sw.append_row(row![db_row.0, db_row.1, db_row.2, db_row.3, db_row.4]) {
+                Ok(_) => (),
+                Err(e) => return Err(*Box::new(e)),
+            }
         }
+        Ok(())
 
-
-        sw.append_row(row!["END", "LINE", true])
 
     }).expect("write excel error!");
 
