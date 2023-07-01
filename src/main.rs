@@ -3,7 +3,7 @@ extern crate simple_excel_writer as excel;
 use excel::*;
 use mysql::{self, OptsBuilder};
 use mysql::prelude::{Queryable};
-
+use std::fs;
 use std::time::Instant;
 
 
@@ -26,6 +26,15 @@ fn main() {
 }
 
 fn create_excel() {
+
+    let folder_path = "tmp";
+
+    // Create the folder if it doesn't exist
+    if let Err(err) = fs::create_dir_all(folder_path) {
+        // Handle the error if unable to create the folder
+        panic!("Failed to create folder: {}", err);
+    }
+
     let mut wb = Workbook::create("tmp/b.xlsx");
 
     let mut sheet = wb.create_sheet("Sheet");
@@ -39,7 +48,7 @@ fn create_excel() {
 
         // Define connection parameters
         let server = "localhost";
-        let database = "test-db";
+        let database = "test";
         let username = "root";
         let password = "";
         let port = 3306; // 3306 otherwise 3307 for ssh tunnel
@@ -57,12 +66,12 @@ fn create_excel() {
         let pool = mysql::Pool::new(mysql::Opts::from(opts)).unwrap();
         let mut conn = pool.get_conn().unwrap();
 
-        let result: Vec<(String, String, String, String, String)> = conn
-            .query("SELECT id, client, quarter, year, wages FROM taxable_wages")
+        let result: Vec<(String, String, String)> = conn
+            .query("SELECT name, age, role FROM users")
             .unwrap();
 
         for db_row in result {
-            match sw.append_row(row![db_row.0, db_row.1]) {
+            match sw.append_row(row![db_row.0, db_row.1, db_row.2]) {
                 Ok(_) => (),
                 Err(e) => return Err(*Box::new(e)),
             }
